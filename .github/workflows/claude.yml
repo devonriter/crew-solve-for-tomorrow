@@ -1,0 +1,35 @@
+name: Claude builder
+
+# A Feature Request from the Crew Build Request form becomes an issue labeled "build".
+# A Test Report that says "fix it" becomes an @claude comment on that request's pull request.
+# Only people with write access to this repo (Devon, and the form's script acting as Devon)
+# can apply labels or trigger @claude, so a stranger on this public repo cannot start a build.
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  build:
+    if: >-
+      (github.event_name == 'issues' && github.event.label.name == 'build') ||
+      (github.event_name != 'issues' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          label_trigger: build
