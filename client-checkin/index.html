@@ -3,21 +3,126 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Client Check-in App | Riter CREW</title>
+<title>Community Connect | Riter CREW</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px 16px; max-width: 640px; margin-inline: auto; line-height: 1.5; color: #1a1a1a; background: #fff; }
-  h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
-  .tag { color: #555; margin-top: 0; }
-  section { margin-top: 2rem; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; line-height: 1.5; color: #1a1a1a; background: #f6f8fb; font-size: 1.1rem; }
+  header { background: #1d4ed8; color: #fff; padding: 16px; }
+  header h1 { margin: 0 0 8px; font-size: 1.6rem; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; }
+  nav a { color: #1d4ed8; background: #fff; text-decoration: none; padding: 12px 16px; min-height: 48px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; }
+  nav a:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+  main { max-width: 680px; margin: 0 auto; padding: 16px; }
+  section { background: #fff; border-radius: 12px; padding: 20px 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.12); scroll-margin-top: 8px; }
+  h2 { margin-top: 0; font-size: 1.4rem; }
+  .sample { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 12px; border-radius: 4px; font-size: 1rem; }
+  .options { display: grid; gap: 10px; padding: 0; margin: 12px 0; }
+  .options button { width: 100%; min-height: 56px; font-size: 1.1rem; text-align: left; padding: 12px 16px; border: 2px solid #94a3b8; background: #fff; border-radius: 10px; cursor: pointer; }
+  .options button[aria-pressed="true"] { border-color: #1d4ed8; background: #dbeafe; font-weight: 700; }
+  .reply { background: #ecfdf5; border-radius: 8px; padding: 12px; min-height: 3rem; }
+  ul.list { padding-left: 0; list-style: none; }
+  ul.list li { border-top: 1px solid #e2e8f0; padding: 12px 0; }
+  ul.list li:first-child { border-top: 0; }
+  .date { color: #475569; font-size: .95rem; }
+  footer { text-align: center; padding: 16px; color: #475569; font-size: 1rem; }
   a { color: #1d4ed8; }
 </style>
 </head>
 <body>
-  <p><a href="/">Riter CREW</a></p>
-  <h1>Client Check-in App</h1>
-  <p class="tag">A simple way for our partners to check in with the people they serve.</p>
-  <section>
-    <p>Coming soon. Our crew is building this now.</p>
+<header>
+  <h1>Community Connect</h1>
+  <nav aria-label="Main">
+    <a href="#home">Home</a>
+    <a href="#checkin">Check-in</a>
+    <a href="#support">Support</a>
+    <a href="#announcements">Announcements</a>
+    <a href="#resources">Resources</a>
+    <a href="#privacy">Privacy</a>
+  </nav>
+</header>
+
+<main>
+  <section id="home">
+    <h2>Welcome</h2>
+    <p>Community Connect is a simple way to stay in touch with Better Way Detroit. Let us know how you are doing, find support, see news, and look up jobs and community help.</p>
+    <p>You do not need to sign in or share any personal details. <a href="#privacy">Read our privacy notice.</a></p>
+    <p class="sample"><strong>Practice version:</strong> everything on this page is sample information made up by students.</p>
   </section>
+
+  <section id="checkin">
+    <h2>Check-in</h2>
+    <p>How are you doing today? Pick the one that fits best.</p>
+    <div class="options" role="group" aria-label="How are you doing today?">
+      <button type="button" data-reply="Great to hear. Keep it up! Check out the Resources section for job ideas.">I'm doing well</button>
+      <button type="button" data-reply="Thanks for checking in. Some days are in between. The Announcements section may have something useful.">I'm okay</button>
+      <button type="button" data-reply="Thank you for letting us know. You are not alone. Take a look at the Support section for ways to get help.">I could use some support</button>
+      <button type="button" data-reply="Thank you for letting us know. Take a look at the Resources section for job help.">I'm looking for work</button>
+      <button type="button" data-reply="Thank you for letting us know. The Support section lists ways to get help with housing.">I need help with housing</button>
+    </div>
+    <div class="reply" id="reply" aria-live="polite">Choose an option above.</div>
+    <p class="sample">This is a demo. Your choice stays on this screen only. It is not saved or sent anywhere, and no one at Better Way Detroit sees it.</p>
+  </section>
+
+  <section id="support">
+    <h2>Support</h2>
+    <p class="sample">Sample information only. These are not real contacts.</p>
+    <ul class="list">
+      <li><strong>Talk to a staff member</strong><br>Sample: stop by the front desk on weekdays, 9 AM to 4 PM.</li>
+      <li><strong>Housing help</strong><br>Sample: ask about a housing check-up with a case manager.</li>
+      <li><strong>Counseling and recovery groups</strong><br>Sample: weekly group meetings, open to everyone.</li>
+      <li><strong>Food and clothing</strong><br>Sample: pantry open Tuesday and Thursday afternoons.</li>
+    </ul>
+    <p><strong>In an emergency, call 911.</strong></p>
+  </section>
+
+  <section id="announcements">
+    <h2>Announcements</h2>
+    <p class="sample">Sample announcements made up for this practice version.</p>
+    <ul class="list">
+      <li><strong>Job Fair Day</strong><br><span class="date">Sample date: first Friday of next month</span><br>Meet sample employers and practice interviewing.</li>
+      <li><strong>Resume Workshop</strong><br><span class="date">Sample date: every Wednesday, 1 PM</span><br>Get help building a resume. Bring your questions.</li>
+      <li><strong>Community Meal</strong><br><span class="date">Sample date: Saturday, noon</span><br>Everyone is welcome.</li>
+    </ul>
+  </section>
+
+  <section id="resources">
+    <h2>Resources</h2>
+    <p class="sample">Sample resources only. Real listings will be added with our partners.</p>
+    <ul class="list">
+      <li><strong>Job Search Help</strong><br>Sample: computer lab time to search and apply for jobs.</li>
+      <li><strong>Job Training Programs</strong><br>Sample: short classes in warehouse, food service, and construction skills.</li>
+      <li><strong>Transportation Help</strong><br>Sample: bus pass information for job interviews.</li>
+      <li><strong>ID and Paperwork Help</strong><br>Sample: help getting a state ID or birth certificate.</li>
+      <li><strong>Interview Clothing Closet</strong><br>Sample: free work clothes for interviews.</li>
+    </ul>
+  </section>
+
+  <section id="privacy">
+    <h2>Privacy Notice</h2>
+    <ul>
+      <li>This app does <strong>not</strong> ask for your name, phone number, email, or address.</li>
+      <li>Your check-in choice is <strong>not saved</strong> and <strong>not sent</strong> anywhere. It disappears when you close or refresh the page.</li>
+      <li>This app does not use accounts, tracking, or social media.</li>
+      <li>Please do not type personal information into this practice version.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <a href="/">Riter CREW home</a> &middot; Practice version with sample information
+</footer>
+
+<script>
+  // Check-in choices only change what is shown on screen. Nothing is stored or sent.
+  var buttons = document.querySelectorAll('.options button');
+  var reply = document.getElementById('reply');
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+      btn.setAttribute('aria-pressed', 'true');
+      reply.textContent = btn.getAttribute('data-reply');
+    });
+  });
+</script>
 </body>
 </html>
