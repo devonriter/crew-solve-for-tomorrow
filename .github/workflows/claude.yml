@@ -5,10 +5,10 @@ name: Claude builder
 # Only people with write access to this repo (Devon, and the form's script acting as Devon)
 # can apply labels or trigger @claude, so a stranger on this public repo cannot start a build.
 #
-# After the builder pushes its branch, the steps below publish it to the live site.
-# Students' text drives the builder, so nothing here trusts the folder it worked in:
-# publishing runs from a fresh checkout of main, and only a branch that stays inside
-# the issue's own project folder gets merged.
+# Students' text drives the builder, so the two jobs below are kept apart on purpose.
+# The "build" job never sees the Firebase secret. The "publish" job runs on a fresh
+# machine, starts from main, and merges a branch only if it stays inside the issue's
+# own project folder.
 
 on:
   issues:
@@ -18,6 +18,18 @@ on:
   pull_request_review_comment:
     types: [created]
 
+# One request at a time, build and publish together, so each build starts from the
+# newest main. queue: max matters: by default GitHub keeps only one waiting run and
+# cancels the older one, which would silently drop a request. The test below is the
+# same one the build job uses, so ordinary comments never wait in this line.
+concurrency:
+  group: >-
+    ${{ ((github.event_name == 'issues' && github.event.label.name == 'build') ||
+    (github.event_name != 'issues' && github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '@claude')))
+    && 'publish' || github.run_id }}
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   build:
     if: >-
@@ -25,17 +37,13 @@ jobs:
       (github.event_name != 'issues' && github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # One run at a time, in order. queue: max matters: by default GitHub keeps only
-    # one waiting run and cancels the older one, which would silently drop a request.
-    concurrency:
-      group: publish
-      cancel-in-progress: false
-      queue: max
     permissions:
       contents: write
       pull-requests: write
       issues: write
       id-token: write
+    outputs:
+      branch_name: ${{ steps.builder.outputs.branch_name }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,28 +55,28 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           label_trigger: build
 
-      # Everything below publishes requests made on issues. An @claude comment on a
-      # pull request is Devon working on that pull request, so it never publishes.
-      - name: Clear the way for a fresh copy of main
-        if: github.event_name != 'pull_request_review_comment' && !github.event.issue.pull_request
-        run: rm -rf _publish
-
-      - name: Fresh copy of main
-        if: github.event_name != 'pull_request_review_comment' && !github.event.issue.pull_request
-        uses: actions/checkout@v4
+  publish:
+    needs: build
+    # Only requests made on issues publish. An @claude comment on a pull request is
+    # Devon working on that pull request. A failed or skipped build also stops here.
+    if: github.event_name != 'pull_request_review_comment' && !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
         with:
           ref: main
-          path: _publish
           fetch-depth: 0
 
       - name: Check the build and merge it into main
         id: publish
-        if: github.event_name != 'pull_request_review_comment' && !github.event.issue.pull_request
-        working-directory: _publish
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
-          BRANCH: ${{ steps.builder.outputs.branch_name }}
+          BRANCH: ${{ needs.build.outputs.branch_name }}
           GH_TOKEN: ${{ github.token }}
         run: bash .github/scripts/publish-build.sh
 
@@ -80,7 +88,6 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: crew-solve-for-tomorrow
           channelId: live
-          entryPoint: _publish
 
       - name: Tell the team it is live
         if: steps.deploy.outcome == 'success'

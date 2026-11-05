@@ -9,15 +9,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Same line as the builder, so two deploys can't run at once.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Same queue as the builder, so two deploys can't run at once.
-    concurrency:
-      group: publish
-      cancel-in-progress: false
-      queue: max
     permissions:
       contents: read
     steps:
