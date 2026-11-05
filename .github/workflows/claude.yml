@@ -1,9 +1,14 @@
 name: Claude builder
 
 # A Feature Request from the Crew Build Request form becomes an issue labeled "build".
-# A Test Report that says "fix it" becomes an @claude comment on that request's pull request.
+# An answer to a question the builder asked becomes an @claude comment on that issue.
 # Only people with write access to this repo (Devon, and the form's script acting as Devon)
 # can apply labels or trigger @claude, so a stranger on this public repo cannot start a build.
+#
+# Students' text drives the builder, so the two jobs below are kept apart on purpose.
+# The "build" job never sees the Firebase secret. The "publish" job runs on a fresh
+# machine, starts from main, and merges a branch only if it stays inside the issue's
+# own project folder.
 
 on:
   issues:
@@ -12,6 +17,18 @@ on:
     types: [created]
   pull_request_review_comment:
     types: [created]
+
+# One request at a time, build and publish together, so each build starts from the
+# newest main. queue: max matters: by default GitHub keeps only one waiting run and
+# cancels the older one, which would silently drop a request. The test below is the
+# same one the build job uses, so ordinary comments never wait in this line.
+concurrency:
+  group: >-
+    ${{ ((github.event_name == 'issues' && github.event.label.name == 'build') ||
+    (github.event_name != 'issues' && github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '@claude')))
+    && 'publish' || github.run_id }}
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   build:
@@ -25,11 +42,68 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+    outputs:
+      branch_name: ${{ steps.builder.outputs.branch_name }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
       - uses: anthropics/claude-code-action@v1
+        id: builder
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           label_trigger: build
+
+  publish:
+    needs: build
+    # Only requests made on issues publish. An @claude comment on a pull request is
+    # Devon working on that pull request. A failed or skipped build also stops here.
+    if: github.event_name != 'pull_request_review_comment' && !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check the build and merge it into main
+        id: publish
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          BRANCH: ${{ needs.build.outputs.branch_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/publish-build.sh
+
+      - name: Deploy to the live site
+        id: deploy
+        if: steps.publish.outputs.published == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: crew-solve-for-tomorrow
+          channelId: live
+
+      - name: Tell the team it is live
+        if: steps.deploy.outcome == 'success'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          FOLDER: ${{ steps.publish.outputs.folder }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "Live now: https://crew-solve-for-tomorrow.web.app/$FOLDER/ (Build #$ISSUE_NUMBER). Refresh and check the footer says Build #$ISSUE_NUMBER."
+          gh issue close "$ISSUE_NUMBER"
+
+      - name: Tell the team it did not publish
+        if: failure() && (steps.publish.outcome == 'failure' || steps.deploy.outcome == 'failure')
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh issue comment "$ISSUE_NUMBER" --body "The build finished, but it did not make it to the live site. Your work is saved. Mr. Riter needs to look at it."
