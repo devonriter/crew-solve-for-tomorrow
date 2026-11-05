@@ -3,22 +3,289 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fundraiser | Riter CREW</title>
+<title>Detroit Donation Match | Riter CREW</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px 16px; max-width: 640px; margin-inline: auto; line-height: 1.5; color: #1a1a1a; background: #fff; }
-  h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
-  .tag { color: #555; margin-top: 0; }
-  section { margin-top: 2rem; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 760px; margin-inline: auto; line-height: 1.5; color: #1a1a1a; background: #fff; font-size: 1.05rem; }
+  h1 { font-size: 1.7rem; margin: 0.25rem 0; }
+  h2 { font-size: 1.3rem; margin-top: 1.5rem; }
   a { color: #1d4ed8; }
+  .tag { color: #555; margin-top: 0; }
+  .notice { background: #fff7d6; border: 2px solid #c9a100; padding: 10px 12px; border-radius: 8px; margin: 12px 0; font-size: 0.95rem; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  nav button, button, .btn { min-height: 48px; padding: 8px 16px; font-size: 1rem; border-radius: 8px; border: 2px solid #1d4ed8; background: #fff; color: #1d4ed8; cursor: pointer; font-family: inherit; }
+  nav button[aria-current="true"], button.primary { background: #1d4ed8; color: #fff; }
+  button.danger { border-color: #b91c1c; color: #b91c1c; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+  .card { border: 2px solid #ccc; border-radius: 10px; padding: 12px; margin: 12px 0; }
+  .card h3 { margin: 0 0 4px; font-size: 1.15rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.9rem; font-weight: 600; border: 2px solid; }
+  .Needed { color: #b91c1c; border-color: #b91c1c; }
+  .Partially { color: #92400e; border-color: #92400e; }
+  .Fulfilled { color: #166534; border-color: #166534; }
+  .High { background: #fee2e2; } .Medium { background: #fef3c7; } .Low { background: #e5e7eb; }
+  .bar { background: #e5e7eb; border-radius: 6px; height: 14px; overflow: hidden; margin-top: 6px; }
+  .bar span { display: block; height: 100%; background: #166534; }
+  label { display: block; font-weight: 600; margin-top: 12px; }
+  input, select, textarea { width: 100%; min-height: 48px; padding: 8px; font-size: 1rem; font-family: inherit; border: 2px solid #555; border-radius: 8px; }
+  .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+  .check input { width: 28px; min-height: 28px; flex: none; }
+  .cols { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 600px) { .cols { grid-template-columns: repeat(3, 1fr); } }
+  .col { border: 2px solid #ccc; border-radius: 10px; padding: 8px 12px; }
+  .col h3 { margin: 4px 0; }
+  .small { font-size: 0.9rem; color: #444; }
+  .msg { font-weight: 600; color: #166534; }
 </style>
 </head>
 <body>
   <p><a href="/">Riter CREW</a></p>
-  <h1>Fundraiser</h1>
-  <p class="tag">Raising money to support our partners' work helping Detroiters get jobs.</p>
-  <section>
-    <p>Coming soon. Our crew is building this now.</p>
-  </section>
+  <h1>Detroit Donation Match</h1>
+  <p class="tag">Nonprofits say exactly what they need. Businesses offer to help. Nonprofit staff decide.</p>
+
+  <div class="notice" role="note">
+    <strong>Practice version.</strong> Every request, business and offer here is <strong>invented</strong> to test the idea.
+    No real business or nonprofit has agreed to take part. Nothing is sent anywhere and no money is collected.
+    Please do not type real names, phone numbers, emails or addresses. Changes stay in your own browser only.
+  </div>
+
+  <nav aria-label="Sections" id="nav"></nav>
+  <main id="view" tabindex="-1"></main>
+
+<script>
+(function () {
+  var KEY = 'donationMatchDemo.v1';
+  var CATS = ['Prepared lunches', 'Groceries', 'Hygiene kits', 'Clothing', 'Other'];
+  var STATUSES = ['Needed', 'Partially Fulfilled', 'Fulfilled'];
+  var PRIORITIES = ['High', 'Medium', 'Low'];
+  var NONPROFITS = ['Sample Nonprofit A (practice)', 'Sample Nonprofit B (practice)'];
+  var TABS = [['needs', 'Needs Board'], ['new', 'Add a Need'], ['offer', 'Offer to Donate'], ['review', 'Review Offers'], ['progress', 'Progress']];
+
+  function seed() {
+    return {
+      nextId: 5,
+      requests: [
+        { id: 1, nonprofit: NONPROFITS[0], category: 'Prepared lunches', item: 'Bagged lunches', qty: 150, received: 0, date: '2026-12-01', priority: 'High', status: 'Needed', notes: 'Packed lunches for a weekend meal program. Needs to be kept cold.' },
+        { id: 2, nonprofit: NONPROFITS[1], category: 'Groceries', item: 'Canned vegetables and rice', qty: 80, received: 30, date: '2026-12-10', priority: 'Medium', status: 'Partially Fulfilled', notes: 'Unopened, unexpired cans and sealed bags only.' },
+        { id: 3, nonprofit: NONPROFITS[0], category: 'Hygiene kits', item: 'Hygiene kits (soap, toothbrush, toothpaste)', qty: 60, received: 60, date: '2026-11-20', priority: 'Low', status: 'Fulfilled', notes: 'New, sealed items only.' },
+        { id: 4, nonprofit: NONPROFITS[1], category: 'Clothing', item: 'Warm winter coats and socks', qty: 40, received: 0, date: '2026-12-15', priority: 'High', status: 'Needed', notes: 'Clean, good condition, adult sizes.' }
+      ],
+      offers: [
+        { id: 1, requestId: 1, business: 'Sample Cafe (practice)', item: 'Turkey sandwich lunches', qty: 50, availability: 'Weekdays after 2 pm', details: 'Made this morning, kept in a cooler.', food: true, foodTemp: 'Kept cold at 40°F or below', foodMade: 'Made today', status: 'Pending', foodChecked: false }
+      ]
+    };
+  }
+
+  var state;
+  try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
+  if (!state || !state.requests) state = seed();
+  var tab = 'needs', selected = null, flash = '';
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  // Build elements safely (no innerHTML with user text).
+  function h(tag, attrs, kids) {
+    var el = document.createElement(tag);
+    for (var k in (attrs || {})) {
+      if (k === 'onclick' || k === 'onchange' || k === 'onsubmit') el[k] = attrs[k];
+      else if (k === 'text') el.textContent = attrs[k];
+      else if (attrs[k] !== false && attrs[k] !== null) el.setAttribute(k, attrs[k] === true ? '' : attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c !== null && c !== undefined) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return el;
+  }
+  function byId(id) { return state.requests.filter(function (r) { return r.id === id; })[0]; }
+  function statusClass(s) { return s === 'Partially Fulfilled' ? 'Partially' : s; }
+  function pill(text, cls) { return h('span', { class: 'pill ' + cls, text: text }); }
+  function bar(r) {
+    var pct = Math.min(100, Math.round(r.received / r.qty * 100));
+    return h('div', {}, [
+      h('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': pct, 'aria-label': r.item + ' progress' }, [h('span', { style: 'width:' + pct + '%' })]),
+      h('div', { class: 'small', text: r.received + ' of ' + r.qty + ' received (' + pct + '%)' })
+    ]);
+  }
+  function field(label, input, id) {
+    return [h('label', { for: id, text: label }), input];
+  }
+  function goTo(t, id) { tab = t; selected = id || null; render(); document.getElementById('view').focus(); }
+
+  function requestCard(r, detailed) {
+    var kids = [
+      h('h3', { text: r.item }),
+      h('div', { class: 'small', text: r.nonprofit + ' · ' + r.category }),
+      h('div', { class: 'row' }, [pill(r.priority + ' priority', r.priority), pill(r.status, statusClass(r.status))]),
+      h('p', { text: 'Needs ' + r.qty + ' by ' + r.date + '.' }),
+      bar(r)
+    ];
+    if (detailed) kids.push(h('p', { text: 'Notes: ' + (r.notes || 'None') }));
+    else kids.push(h('div', { class: 'row' }, [h('button', { onclick: function () { goTo('details', r.id); }, text: 'See details' })]));
+    return h('div', { class: 'card' }, kids);
+  }
+
+  function viewNeeds() {
+    var root = h('div', {}, [h('h2', { text: 'Donation Needs Board' })]);
+    state.requests.forEach(function (r) { root.appendChild(requestCard(r)); });
+    return root;
+  }
+
+  function viewDetails() {
+    var r = byId(selected);
+    if (!r) return viewNeeds();
+    var offers = state.offers.filter(function (o) { return o.requestId === r.id; });
+    var root = h('div', {}, [
+      h('button', { onclick: function () { goTo('needs'); }, text: '← Back to board' }),
+      h('h2', { text: 'Donation Request Details' }),
+      requestCard(r, true),
+      h('div', { class: 'row' }, [h('button', { class: 'primary', onclick: function () { goTo('offer', r.id); }, text: 'Offer to help with this' })]),
+      h('h2', { text: 'Offers for this request' })
+    ]);
+    if (!offers.length) root.appendChild(h('p', { text: 'No offers yet.' }));
+    offers.forEach(function (o) {
+      root.appendChild(h('div', { class: 'card' }, [h('strong', { text: o.business }), h('div', { text: o.qty + ' × ' + o.item + ' — ' + o.status })]));
+    });
+    return root;
+  }
+
+  function viewNew() {
+    var f = {};
+    f.np = h('select', { id: 'np' }, NONPROFITS.map(function (n) { return h('option', { text: n }); }));
+    f.cat = h('select', { id: 'cat' }, CATS.map(function (n) { return h('option', { text: n }); }));
+    f.item = h('input', { id: 'item', required: true, maxlength: 80 });
+    f.qty = h('input', { id: 'qty', type: 'number', min: 1, max: 100000, required: true });
+    f.date = h('input', { id: 'date', type: 'date', required: true });
+    f.pri = h('select', { id: 'pri' }, PRIORITIES.map(function (n) { return h('option', { text: n }); }));
+    f.notes = h('textarea', { id: 'notes', rows: 3, maxlength: 300 });
+    var form = h('form', { onsubmit: function (e) {
+      e.preventDefault();
+      state.requests.push({ id: state.nextId++, nonprofit: f.np.value, category: f.cat.value, item: f.item.value.trim(), qty: Math.max(1, parseInt(f.qty.value, 10) || 1), received: 0, date: f.date.value, priority: f.pri.value, status: 'Needed', notes: f.notes.value.trim() });
+      save(); flash = 'Sample request added to the board.'; goTo('needs');
+    } }, [].concat(
+      field('Nonprofit (practice)', f.np, 'np'), field('Type of item', f.cat, 'cat'),
+      field('What is needed', f.item, 'item'), field('How many', f.qty, 'qty'),
+      field('Date needed', f.date, 'date'), field('Priority', f.pri, 'pri'),
+      field('Notes (food handling, sizes, etc.)', f.notes, 'notes'),
+      [h('div', { class: 'row' }, [h('button', { class: 'primary', type: 'submit', text: 'Post sample request' })])]
+    ));
+    return h('div', {}, [h('h2', { text: 'Add a Sample Donation Need' }), form]);
+  }
+
+  function viewOffer() {
+    var f = {};
+    f.req = h('select', { id: 'req' }, state.requests.filter(function (r) { return r.status !== 'Fulfilled'; }).map(function (r) {
+      return h('option', { value: r.id, selected: r.id === selected, text: r.item + ' — ' + r.nonprofit });
+    }));
+    f.biz = h('input', { id: 'biz', required: true, maxlength: 60, placeholder: 'Invented name, e.g. Sample Bakery' });
+    f.item = h('input', { id: 'oitem', required: true, maxlength: 80 });
+    f.qty = h('input', { id: 'oqty', type: 'number', min: 1, max: 100000, required: true });
+    f.avail = h('input', { id: 'avail', required: true, maxlength: 100, placeholder: 'e.g. Weekdays after 2 pm' });
+    f.details = h('textarea', { id: 'odet', rows: 3, maxlength: 300 });
+    f.food = h('input', { id: 'food', type: 'checkbox' });
+    f.temp = h('input', { id: 'temp', maxlength: 100, placeholder: 'e.g. Kept cold, sealed packaging' });
+    f.made = h('input', { id: 'made', maxlength: 100, placeholder: 'e.g. Made today / expires Jan 5' });
+    var foodBox = h('div', { class: 'card', hidden: true }, [].concat(
+      [h('p', { class: 'small', text: 'Food is never accepted automatically. Nonprofit staff will check these details first.' })],
+      field('How is the food stored or kept safe?', f.temp, 'temp'), field('When was it made, or when does it expire?', f.made, 'made')));
+    f.food.onchange = function () { foodBox.hidden = !f.food.checked; };
+    var form = h('form', { onsubmit: function (e) {
+      e.preventDefault();
+      if (!f.req.value) return;
+      state.offers.push({ id: state.nextId++, requestId: parseInt(f.req.value, 10), business: f.biz.value.trim(), item: f.item.value.trim(), qty: Math.max(1, parseInt(f.qty.value, 10) || 1), availability: f.avail.value.trim(), details: f.details.value.trim(), food: f.food.checked, foodTemp: f.temp.value.trim(), foodMade: f.made.value.trim(), status: 'Pending', foodChecked: false });
+      save(); flash = 'Sample offer sent. It is Pending until nonprofit staff review it.'; goTo('review');
+    } }, [].concat(
+      field('Which need are you offering for?', f.req, 'req'), field('Business name (invented)', f.biz, 'biz'),
+      field('What you can give', f.item, 'oitem'), field('How many', f.qty, 'oqty'),
+      field('When it is available', f.avail, 'avail'), field('Other details', f.details, 'odet'),
+      [h('label', { class: 'check', for: 'food' }, [f.food, 'This offer includes food or meals']), foodBox,
+       h('div', { class: 'row' }, [h('button', { class: 'primary', type: 'submit', text: 'Submit sample offer' })])]
+    ));
+    return h('div', {}, [h('h2', { text: 'Business Donation Offer (practice)' }), h('p', { class: 'small', text: 'Do not enter real phone numbers, emails or addresses.' }), form]);
+  }
+
+  function setStatusFromQty(r) {
+    r.status = r.received >= r.qty ? 'Fulfilled' : (r.received > 0 ? 'Partially Fulfilled' : 'Needed');
+  }
+
+  function viewReview() {
+    var root = h('div', {}, [h('h2', { text: 'Nonprofit Review Dashboard' }),
+      h('p', { class: 'small', text: 'Staff decide on every offer. Nothing is approved automatically.' })]);
+    if (!state.offers.length) root.appendChild(h('p', { text: 'No offers yet.' }));
+    state.offers.forEach(function (o) {
+      var r = byId(o.requestId);
+      var kids = [
+        h('h3', { text: o.business }),
+        h('div', { text: 'Offers ' + o.qty + ' × ' + o.item }),
+        h('div', { class: 'small', text: 'For: ' + (r ? r.item + ' (' + r.nonprofit + ')' : 'removed request') }),
+        h('div', { class: 'small', text: 'Available: ' + o.availability }),
+        o.details ? h('div', { class: 'small', text: 'Details: ' + o.details }) : null,
+        h('div', { class: 'row' }, [pill(o.status, o.status === 'Accepted' ? 'Fulfilled' : o.status === 'Declined' ? 'Needed' : 'Partially')])
+      ];
+      if (o.food) {
+        kids.push(h('div', { class: 'notice' }, [
+          h('strong', { text: 'Food offer: safety check required. ' }),
+          'Storage: ' + (o.foodTemp || 'not given') + '. Made/expires: ' + (o.foodMade || 'not given') + '.']));
+      }
+      if (o.status === 'Pending') {
+        var chk = null, acc;
+        if (o.food) {
+          chk = h('input', { type: 'checkbox', id: 'fc' + o.id });
+          chk.onchange = function () { acc.disabled = !chk.checked; };
+          kids.push(h('label', { class: 'check', for: 'fc' + o.id }, [chk, 'Staff reviewed the food safety and handling details and they are acceptable.']));
+        }
+        acc = h('button', { class: 'primary', disabled: o.food, text: 'Accept', onclick: function () {
+          if (o.food && !chk.checked) return;
+          o.status = 'Accepted'; o.foodChecked = !!o.food;
+          if (r) { r.received = Math.min(r.qty, r.received + o.qty); setStatusFromQty(r); }
+          save(); flash = 'Offer accepted. The request was updated.'; render();
+        } });
+        kids.push(h('div', { class: 'row' }, [acc, h('button', { class: 'danger', text: 'Decline', onclick: function () { o.status = 'Declined'; save(); flash = 'Offer declined.'; render(); } })]));
+      }
+      root.appendChild(h('div', { class: 'card' }, kids));
+    });
+    return root;
+  }
+
+  function viewProgress() {
+    var root = h('div', {}, [h('h2', { text: 'Donation Progress Tracker' })]);
+    var cols = h('div', { class: 'cols' });
+    STATUSES.forEach(function (s) {
+      var list = state.requests.filter(function (r) { return r.status === s; });
+      var col = h('div', { class: 'col' }, [h('h3', { text: s + ' (' + list.length + ')' })]);
+      if (!list.length) col.appendChild(h('p', { class: 'small', text: 'Nothing here.' }));
+      list.forEach(function (r) {
+        var sel = h('select', { 'aria-label': 'Change status for ' + r.item, onchange: function () {
+          r.status = sel.value;
+          if (r.status === 'Fulfilled') r.received = r.qty;
+          else if (r.status === 'Needed') r.received = 0;
+          else if (r.received === 0 || r.received >= r.qty) r.received = Math.ceil(r.qty / 2);
+          save(); flash = 'Status updated.'; render();
+        } }, STATUSES.map(function (o) { return h('option', { selected: o === r.status, text: o }); }));
+        col.appendChild(h('div', { class: 'card' }, [h('strong', { text: r.item }), h('div', { class: 'small', text: r.nonprofit }), bar(r), h('label', { text: 'Update status' }), sel]));
+      });
+      cols.appendChild(col);
+    });
+    root.appendChild(cols);
+    root.appendChild(h('div', { class: 'row' }, [h('button', { class: 'danger', text: 'Reset practice data', onclick: function () {
+      if (confirm('Reset everything back to the starting examples?')) { state = seed(); save(); flash = 'Practice data reset.'; goTo('needs'); }
+    } })]));
+    return root;
+  }
+
+  function render() {
+    var nav = document.getElementById('nav');
+    nav.textContent = '';
+    TABS.forEach(function (t) {
+      nav.appendChild(h('button', { 'aria-current': String(tab === t[0] || (tab === 'details' && t[0] === 'needs')), text: t[1], onclick: function () { flash = ''; goTo(t[0]); } }));
+    });
+    var view = document.getElementById('view');
+    view.textContent = '';
+    if (flash) view.appendChild(h('p', { class: 'msg', role: 'status', text: flash }));
+    var fn = { needs: viewNeeds, details: viewDetails, 'new': viewNew, offer: viewOffer, review: viewReview, progress: viewProgress }[tab];
+    view.appendChild(fn());
+  }
+  render();
+})();
+</script>
   <script src="/build-stamp.js"></script>
 </body>
 </html>
