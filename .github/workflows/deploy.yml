@@ -1,0 +1,32 @@
+name: Deploy to Firebase Hosting
+
+# Publishes the site when Devon pushes or merges to main himself. The builder's
+# own publishes deploy from claude.yml: a push made with the Action's token does
+# not start this workflow, so a build is never deployed twice.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Same queue as the builder, so two deploys can't run at once.
+    concurrency:
+      group: publish
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: crew-solve-for-tomorrow
+          channelId: live
